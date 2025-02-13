@@ -1,0 +1,14 @@
+---
+vlans:
+  - name: vlan10_dev
+    vlan_id: 10
+    bridge: vmbr1
+    bridge_ports: eth1
+  - name: vlan20_uat
+    vlan_id: 20
+    bridge: vmbr2
+    bridge_ports: eth2
+  - name: vlan30_prod
+    vlan_id: 30
+    bridge: vmbr3
+    bridge_ports: eth3

@@ -1,0 +1,32 @@
+---
+- name: Download ISO Files
+  hosts: proxmox
+  gather_facts: false
+  vars_files:
+    - /home/kltej/devops/github/homelab/IaC/ansible/inventory/group_vars/proxmox_isos.yaml
+  tasks:
+    - name: Check if ISO file exists
+      ansible.builtin.stat:
+        path: "{{ item.dest }}"
+      with_items: "{{ iso_files }}"
+      register: iso_stats
+
+    - name: Download ISO files if they do not exist
+      ansible.builtin.get_url:
+        url: "{{ item.item.url }}"
+        dest: "{{ item.item.dest }}"
+      when: not item.stat.exists
+      with_items: "{{ iso_stats.results }}"
+      become: yes
+
+    - name: Ensure the ISOs have been downloaded
+      ansible.builtin.stat:
+        path: "{{ item.dest }}"
+      with_items: "{{ iso_files }}"
+      register: iso_stats_final
+
+    - name: Fail if any ISO is not downloaded
+      ansible.builtin.fail:
+        msg: "ISO download failed for {{ item.item.dest }}"
+      when: not item.stat.exists
+      with_items: "{{ iso_stats_final.results }}"

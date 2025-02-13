@@ -1,0 +1,18 @@
+---
+- name: Configure Proxmox Network
+  hosts: proxmox
+  become: yes
+  vars_files:
+    - /home/kltej/devops/github/homelab/IaC/ansible/inventory/group_vars/proxmox_network.yaml
+  tasks:
+    - name: Create network bridges
+      ansible.builtin.command:
+        cmd: "pvesh create /nodes/{{ inventory_hostname }}/network -iface {{ item.bridge }} -type bridge -bridge_ports {{ item.bridge_ports }} -bridge_stp off -bridge_fd 0"
+      loop: "{{ vlans }}"
+      ignore_errors: yes
+
+    - name: Create VLANs
+      ansible.builtin.command:
+        cmd: "pvesh create /nodes/{{ inventory_hostname }}/network -iface {{ item.name }} -type vlan -vlanid {{ item.vlan_id }} -bridge {{ item.bridge }}"
+      loop: "{{ vlans }}"
+      ignore_errors: yes

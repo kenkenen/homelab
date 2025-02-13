@@ -1,0 +1,14 @@
+---
+- name: Setup Proxmox Datastores
+  hosts: proxmox
+  gather_facts: false
+  vars_files:
+    - /home/kltej/devops/github/homelab/IaC/ansible/inventory/group_vars/proxmox_dirs.yaml
+  tasks:
+    - name: Create datastore directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop: "{{ datastore_directories }}"
+      become: yes

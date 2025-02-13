@@ -1,0 +1,8 @@
+# Ignore SSH keys
+*.pem
+*.key
+*.pub
+
+# Ignore backup files
+*.bak
+*.swp
