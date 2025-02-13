@@ -73,6 +73,6 @@ export pm_password="your_admin_password"
 export ansible_ssh_key="path/to/ansible_key"
 
 # Terraform
-export TF_VAR_pm_user=$pm_user
+export TF_VAR_pm_user="$pm_user@pam"
 export TF_VAR_pm_password=$pm_password
 export TF_VAR_terraform_ssh_key="path/to/terraform_key"
