@@ -1,6 +1,43 @@
 # homelab
 
-This repository contains the configuration for a homelab setup using Proxmox as a VM host. The goal is to create a robust and flexible environment for deploying and managing various services commonly used in a home setting, such as OwnCloud, Plex, and more. The setup includes a CI/CD implementation for managing the deployment of these services.
+This repository contains the configuration for a homelab setup using Proxmox as a VM host. The goal is to create a robust and flexible environment for deploying and managing various services commonly used in a home setting, such as OwnCloud, Plex, and more. The setup includes a CI/CD implementation for managing the deployment of these containerized services onto Kubernetes.
+
+## Getting Started
+
+The first thing you'll want to do is deploy Proxmox VE onto some hardware. For the development of this repository, I used a virtual machine I created using Hyper-V on my Windows 11 laptop that meets the prereqs.
+
+<details>
+<summary>## Prerequisites for Running Proxmox as a VM</summary>
+
+To run Proxmox VE as a virtual machine for development purposes, ensure that you meet the following prerequisites:
+
+### Hardware Requirements
+
+- **CPU**: Ensure that your host machine has a CPU that supports virtualization (e.g., Intel VT-x or AMD-V).
+- **Memory**: Allocate sufficient RAM for both the host machine and the Proxmox VM. A minimum of 4GB for Proxmox is recommended, but more may be needed depending on your use case.
+- **Storage**: Allocate enough disk space for the Proxmox VM and the VMs you plan to create within Proxmox.
+
+### Virtualization Software
+
+- **Hypervisor**: Use a hypervisor that supports nested virtualization, such as Hyper-V, VMware Workstation, or VirtualBox.
+- **Nested Virtualization**: Ensure that nested virtualization is enabled in your hypervisor settings.
+
+### Network Configuration
+
+- **Bridged Networking**: Configure the Proxmox VM to use bridged networking to ensure it can communicate with other devices on your network.
+- **Static IP**: Consider assigning a static IP address to the Proxmox VM for easier access and management.
+
+### Proxmox VE ISO
+
+- **Download**: Download the latest Proxmox VE ISO from the [official Proxmox website](https://www.proxmox.com/en/downloads).
+- **Installation**: Follow the [Proxmox installation guide](https://pve.proxmox.com/wiki/Installation) to install Proxmox VE on the VM.
+
+### Host Machine Configuration
+
+- **Resources**: Ensure that the host machine has enough resources (CPU, RAM, and disk space) to run both the host OS and the Proxmox VM efficiently.
+- **Virtualization Support**: Verify that virtualization support is enabled in the host machine's BIOS/UEFI settings.
+
+</details>
 
 ## Environment Variables
 
@@ -38,27 +75,3 @@ export ansible_ssh_key="path/to/ansible_key"
 export TF_VAR_pm_user=$pm_user
 export TF_VAR_pm_password=$pm_password
 export TF_VAR_terraform_ssh_key="path/to/terraform_key"
-```
-
-## Planned Designs
-
-### CI/CD Implementation
-
-The CI/CD pipeline will be used to manage the deployment of services to the homelab environment. The pipeline will include the following stages:
-
-1. **Development**: Code and configuration changes are made and tested in a development environment.
-2. **Staging**: Changes are deployed to a staging environment for further testing and validation.
-3. **Production**: Once validated, changes are deployed to the production environment.
-
-### Services
-
-The following services are planned to be deployed and managed using the CI/CD pipeline:
-
-- **OwnCloud**: A personal cloud storage solution for file sharing and synchronization.
-- **Plex**: A media server for streaming movies, TV shows, music, and more.
-- **Home Automation**: Solutions for automating various aspects of the home, such as lighting, security, and climate control.
-- **Backup Solutions**: Services for backing up important data and ensuring data integrity.
-
-### Infrastructure
-
-The infrastructure will be managed using Proxmox as the VM host, with Ansible and Terraform used for provisioning and configuration management. The environment will be segmented into different networks for development, staging, and production to ensure isolation and manageability.
