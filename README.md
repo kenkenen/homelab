@@ -7,7 +7,8 @@ This repository contains the configuration for a homelab setup using Proxmox as 
 The first thing you'll want to do is deploy Proxmox VE onto some hardware. For the development of this repository, I used a virtual machine I created using Hyper-V on my Windows 11 laptop that meets the prereqs.
 
 <details>
-<summary>## Prerequisites for Running Proxmox as a VM</summary>
+<summary>Expand for prereqs info</summary>
+## Prerequisites for Running Proxmox as a VM
 
 To run Proxmox VE as a virtual machine for development purposes, ensure that you meet the following prerequisites:
 
