@@ -123,5 +123,6 @@ Execute the playbooks in the following order:
 
 # TO DO
 
-1. Need to create images for the disk a VM will use.
-2. Need to create users on the proxmox host.
+1. Add manual instructions or a powershell script for configuring Hyper-V
+2. Need to create images for the disk a VM will use.
+3. Need to create users on the proxmox host.
