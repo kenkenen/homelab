@@ -1,0 +1,42 @@
+---
+- name: Create VMs
+  hosts: proxmox
+  gather_facts: false
+  become: yes
+  vars_files:
+    - "{{ lookup('env', 'HOME') }}/devops/github/homelab/IaC/ansible/inventory/group_vars/proxmox_vms.yaml"
+    - "{{ lookup('env', 'HOME') }}/devops/github/homelab/IaC/ansible/inventory/group_vars/proxmox.yaml"
+    - "{{ lookup('env', 'HOME') }}/devops/github/homelab/IaC/ansible/inventory/group_vars/proxmox_isos.yaml"
+  tasks:
+    - name: Find matching ISO for each VM
+      set_fact:
+        iso_file: "{{ iso_files | selectattr('name', 'equalto', vm.name) | map(attribute='filename') | first }}"
+      loop: "{{ vms }}"
+      loop_control:
+        loop_var: vm
+
+    - name: Create VMs
+      ansible.builtin.command:
+        cmd: >
+          pvesh create /nodes/{{ proxmox_node }}/qemu
+          -vmid {{ vm.vmid }}
+          -name {{ vm.dns_name }}
+          -sockets 1
+          -cores {{ vm.cpu }}
+          -memory {{ vm.memory }}
+          -ide2 local:iso/{{ iso_file }},media=cdrom
+          -ostype {{ vm.os_type }}
+          {% for i in range(vm.networks | length) %}
+          -net{{ i }} virtio,bridge={{ vm.networks[i].bridge }}
+          {% endfor %}
+      loop: "{{ vms }}"
+      loop_control:
+        loop_var: vm
+
+    - name: Start VMs
+      ansible.builtin.command:
+        cmd: >
+          pvesh create /nodes/{{ proxmox_node }}/qemu/{{ vm.vmid }}/status/start
+      loop: "{{ vms }}"
+      loop_control:
+        loop_var: vm

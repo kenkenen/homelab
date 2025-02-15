@@ -1,0 +1,13 @@
+---
+- name: Setup Proxmox Storage
+  hosts: proxmox
+  gather_facts: false
+  vars_files:
+    - "{{ lookup('env', 'HOME') }}/devops/github/homelab/IaC/ansible/inventory/group_vars/proxmox_storage.yaml"
+  tasks:
+    - name: Create storage directories
+      ansible.builtin.shell: |
+        mkdir -p {{ item.path }}
+        pvesm add dir {{ item.name }} --path {{ item.path }} --content {{ item.content }}
+      loop: "{{ storage }}"
+      become: yes

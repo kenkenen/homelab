@@ -1,0 +1,23 @@
+# This file is managed by Ansible
+auto lo
+iface lo inet loopback
+
+{% for iface in ifaces %}
+auto {{ iface.name }}
+iface {{ iface.name }} inet {{ iface.inet }}
+    {% if iface.inet == "static" %}
+address {{ iface.address }}
+    netmask {{ iface.netmask }}
+    gateway {{ iface.gateway }}
+    dns-nameservers {{ iface.dns }}
+    {% endif %}
+
+{% endfor %}
+{% for bridge in bridges %}
+auto {{ bridge.name }}
+iface {{ bridge.name }} inet manual
+    {% if bridge.bridge_ports is defined %}
+bridge_ports {{ bridge.bridge_ports }}
+    {% endif %}
+
+{% endfor %}

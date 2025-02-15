@@ -1,0 +1,8 @@
+---
+hosts:
+  - name: proxmox
+    ip: ${pm_address}
+    user: root
+    password: '${pm_password}'
+    
+

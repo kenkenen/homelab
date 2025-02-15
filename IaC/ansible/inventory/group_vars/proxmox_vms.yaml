@@ -1,0 +1,15 @@
+---
+vms:
+  - name: pfsense_2.7.2
+    dns_name: pfsense272
+    vmid: 100
+    cpu: 1
+    memory: 512
+    disk_size: 8G
+    os_type: other
+    networks:
+      - bridge: vmbr01
+      - bridge: vmbr02
+      - bridge: vmbr10
+      - bridge: vmbr20
+      - bridge: vmbr30

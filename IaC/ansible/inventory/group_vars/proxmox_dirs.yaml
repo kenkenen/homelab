@@ -1,5 +1,0 @@
----
-datastore_directories:
-  - /var/lib/vz/template/iso
-  - /var/lib/vz/images
-  - /var/lib/vz/backup

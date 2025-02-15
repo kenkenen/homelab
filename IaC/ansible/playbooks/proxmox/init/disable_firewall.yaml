@@ -1,0 +1,21 @@
+---
+- name: Disable Proxmox Firewall
+  hosts: proxmox
+  gather_facts: false
+  become: yes
+  tasks:
+    - name: Disable firewall at datacenter level
+      ansible.builtin.command:
+        cmd: pve-firewall stop
+      ignore_errors: true
+
+    - name: Disable firewall at node level
+      ansible.builtin.command:
+        cmd: pve-firewall stop
+      ignore_errors: true
+
+    - name: Disable firewall service
+      ansible.builtin.systemd:
+        name: pve-firewall
+        enabled: no
+        state: stopped

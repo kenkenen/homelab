@@ -3,30 +3,49 @@
   hosts: proxmox
   gather_facts: false
   vars_files:
-    - /home/kltej/devops/github/homelab/IaC/ansible/inventory/group_vars/proxmox_isos.yaml
+    - "{{ lookup('env', 'HOME') }}/devops/github/homelab/IaC/ansible/inventory/group_vars/proxmox_isos.yaml"
   tasks:
-    - name: Check if ISO file exists
+    - name: Set download directory variable
+      ansible.builtin.set_fact:
+        dl_dir: "{{ local[0].dl_dir }}"
+
+    - name: Check if ISO file exists locally
       ansible.builtin.stat:
-        path: "{{ item.dest }}"
+        path: "{{ dl_dir }}/{{ item.filename }}"
+      with_items: "{{ iso_files }}"
+      register: local_iso_stats
+      delegate_to: localhost
+
+    - name: Check if ISO file exists on target host
+      ansible.builtin.stat:
+        path: "{{ item.dest }}/{{ item.filename }}"
       with_items: "{{ iso_files }}"
       register: iso_stats
+
+    - name: Copy ISO files from local machine if they exist and not on target host
+      ansible.builtin.copy:
+        src: "{{ dl_dir }}/{{ item.item.filename }}"
+        dest: "{{ item.item.dest }}/{{ item.item.filename }}"
+      when: item.stat.exists and not item.item.stat.exists
+      with_items: "{{ local_iso_stats.results }}"
+      become: yes
 
     - name: Download ISO files if they do not exist
       ansible.builtin.get_url:
         url: "{{ item.item.url }}"
-        dest: "{{ item.item.dest }}"
+        dest: "{{ item.item.dest }}/{{ item.item.filename }}"
       when: not item.stat.exists
       with_items: "{{ iso_stats.results }}"
       become: yes
 
     - name: Ensure the ISOs have been downloaded
       ansible.builtin.stat:
-        path: "{{ item.dest }}"
+        path: "{{ item.dest }}/{{ item.filename }}"
       with_items: "{{ iso_files }}"
       register: iso_stats_final
 
-    - name: Fail if any ISO is not downloaded
+    - name: Fail if any ISO is missing
       ansible.builtin.fail:
-        msg: "ISO download failed for {{ item.item.dest }}"
+        msg: "ISO copy or download failed for {{ item.item.dest }}/{{ item.item.filename }}"
       when: not item.stat.exists
       with_items: "{{ iso_stats_final.results }}"

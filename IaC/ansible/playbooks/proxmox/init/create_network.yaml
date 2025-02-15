@@ -1,0 +1,41 @@
+---
+- name: Configure Proxmox Network
+  hosts: proxmox
+  gather_facts: true
+  become: yes
+  vars_files:
+    - "{{ lookup('env', 'HOME') }}/devops/github/homelab/IaC/ansible/inventory/group_vars/proxmox_network.yaml"
+  tasks:
+    - name: Create network bridges using pvesh
+      ansible.builtin.command:
+        cmd: >
+          pvesh create /nodes/{{ proxmox_node }}/network
+          -type bridge
+          -iface {{ item.name }}
+          {% if item.bridge_ports is defined %}
+          -bridge_ports {{ item.bridge_ports }}
+          {% endif %}
+          {% if item.autostart is defined %}
+          -autostart {{ item.autostart }}
+          {% endif %}
+      loop: "{{ bridges }}"
+      loop_control:
+        loop_var: item
+
+    - name: Flush handlers
+      meta: flush_handlers
+
+    - name: Restart networking service
+      ansible.builtin.service:
+        name: networking
+        state: restarted
+
+    - name: Wait for the server to come back online
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+
+  handlers:
+    - name: Restart networking
+      ansible.builtin.service:
+        name: networking
+        state: restarted

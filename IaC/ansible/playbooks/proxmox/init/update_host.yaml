@@ -1,0 +1,70 @@
+---
+- name: Update Proxmox Host
+  hosts: proxmox
+  gather_facts: true
+  become: yes
+  tasks:
+    - name: Replace Proxmox Enterprise repository with Community repository
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/pve-no-subscription.list
+        content: |
+          deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription
+      notify: Update package list
+
+    - name: Remove Proxmox Enterprise repository
+      ansible.builtin.file:
+        path: /etc/apt/sources.list.d/pve-enterprise.list
+        state: absent
+      notify: Update package list
+
+    - name: Update package list
+      ansible.builtin.apt:
+        update_cache: yes
+      when: false  # This task will be triggered by the handlers
+
+    - name: Upgrade all packages to the latest version
+      ansible.builtin.apt:
+        upgrade: dist
+
+    - name: Clean up unnecessary packages
+      ansible.builtin.apt:
+        autoremove: yes
+        autoclean: yes
+
+    - name: Check if a reboot is required
+      ansible.builtin.command:
+        cmd: checkrestart
+      register: reboot_required
+      failed_when: false
+      changed_when: false
+
+    - name: Set reboot required fact
+      ansible.builtin.set_fact:
+        reboot_required: "{{ 'No processes using old versions of upgraded files' not in reboot_required.stdout }}"
+
+    - name: Flush handlers
+      meta: flush_handlers
+
+    - name: Reboot the server if a kernel update was installed
+      ansible.builtin.reboot:
+        reboot_timeout: 600
+      when: reboot_required
+
+    - name: Wait for the server to come back online
+      ansible.builtin.wait_for_connection:
+        timeout: 300
+      when: reboot_required
+
+    - name: Ensure the server is fully up and running
+      ansible.builtin.command:
+        cmd: uptime
+      register: uptime_result
+      until: uptime_result.rc == 0
+      retries: 5
+      delay: 10
+      when: reboot_required
+
+  handlers:
+    - name: Update package list
+      ansible.builtin.apt:
+        update_cache: yes

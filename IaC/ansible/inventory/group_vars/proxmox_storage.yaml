@@ -1,0 +1,11 @@
+---
+storage:
+  - name: iso
+    path: /var/lib/vz/template/iso
+    content: iso
+  - name: images
+    path: /var/lib/vz/images
+    content: images
+  - name: backup
+    path: /var/lib/vz/backup
+    content: backup

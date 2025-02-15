@@ -1,0 +1,13 @@
+proxmox_users:
+  - username: "{{ lookup('env', 'admin_username') }}"
+    password: "{{ lookup('env', 'root_password') }}"
+    role: "Administrator"
+  - username: "ansible"
+    password: "{{ lookup('env', 'root_password') }}"
+    role: "Administrator"
+  - username: "terraform"
+    password: "{{ lookup('env', 'root_password') }}"
+    role: "Administrator"
+  - username: "{{ lookup('env', 'user_username') }}"
+    password: "{{ lookup('env', 'user_password') }}"
+    role: "PVEUser"

@@ -1,14 +1,27 @@
 ---
-vlans:
-  - name: vlan10_dev
-    vlan_id: 10
-    bridge: vmbr1
+ifaces:
+  - name: eth0
+    inet: static
+    address: 192.168.4.2
+    netmask: 255.255.255.0
+    gateway: 192.168.4.1
+    dns: 192.168.4.1
+  - name: eth1
+    inet: manual
+  - name: eth2
+    inet: manual
+
+
+bridges:
+  - name: vmbr01
     bridge_ports: eth1
-  - name: vlan20_uat
-    vlan_id: 20
-    bridge: vmbr2
+    autostart: 1
+  - name: vmbr02
     bridge_ports: eth2
-  - name: vlan30_prod
-    vlan_id: 30
-    bridge: vmbr3
-    bridge_ports: eth3
+    autostart: 1
+  - name: vmbr10
+    autostart: 1
+  - name: vmbr20
+    autostart: 1
+  - name: vmbr30
+    autostart: 1

@@ -8,6 +8,7 @@ The first thing you'll want to do is deploy Proxmox VE onto some hardware. For t
 
 <details>
 <summary>Expand for prereqs info</summary>
+
 ## Prerequisites for Running Proxmox as a VM
 
 To run Proxmox VE as a virtual machine for development purposes, ensure that you meet the following prerequisites:
@@ -42,37 +43,85 @@ To run Proxmox VE as a virtual machine for development purposes, ensure that you
 
 ## Environment Variables
 
-To run the Ansible playbooks and Terraform configurations, you need to set the following environment variables:
+You need to set the following environment variables. I set them in my bashrc so that it was loaded into the environment on start up. Add the following lines to your `.bashrc` or `.zshrc` file, replacing with the actual details for your environment:
 
-### Proxmox
+<details>
+<summary>You need to set the following environment variables.</summary>
 
-- `pm_user`: Proxmox user (e.g., `root`)
-- `pm_password`: Proxmox password
+## Env
+export domain="DOMAIN"
 
-### Ansible
+## Admin
+export admin_fname='ADMIN_FNAME'
+export admin_lname='ADMIN_LNAME'
+export admin_email='ADMIN_EMAIL'
+export admin_username='ASMIN_USERNAME'
+export admin_password='ADMIN_PASSWORD'
+export admin_ssh_key="$HOME/.ssh/id_rsa"
 
-- `ansible_ssh_key`: Path to the SSH private key file for Ansible (e.g., `~/.ssh/ansible_key`)
+## Root
+export root_password='ROOT_PASSWORD'
 
-### Terraform
+## User
+export user_fname="USER_FNAME"
+export user_lname="USER_LNAME"
+export user_email="USER_EMAIL"
+export user_username="USER_USERNAME"
+export user_password="USER_PASSWORD"
 
-- `TF_VAR_pm_user`: Proxmox user (e.g., `root`)
-- `TF_VAR_pm_password`: Proxmox password
-- `TF_VAR_terraform_ssh_key`: Path to the SSH private key file for Terraform (e.g., `~/.ssh/terraform_key`)
+## Proxmox
+export pm_user='root'
+export pm_password="$root_password"
+export pm_address="PROXMOX_IP"
+export pm_netmask="PROXMOX_NETMASK"
+export pm_gateway="PROXMOX_GATEWAY"
+export pm_dns="PROXMOX_DNS"
 
-### Example
+## Ansible
+export ansible_inv="$HOME/devops/github/homelab/IaC/ansible/inventory/hosts.ini"
+export ansible_pbs="$HOME/devops/github/homelab/IaC/ansible/playbooks"
+export ansible_ssh_key="$HOME/.ssh/ansible_key"
+alias ansiblepb='ansible-playbook'
+export ansible_username="ansible"
+export ansible_password='ANSIBLE_PASSWORD'
 
-Add the following lines to your `.bashrc` or `.zshrc` file, replacing with the actual details for your environment:
-
-```sh
-# Variables
-# Proxmox
-export pm_user="your_admin_user"
-export pm_password="your_admin_password"
-
-# Ansible
-export ansible_ssh_key="path/to/ansible_key"
-
-# Terraform
+## Terraform
 export TF_VAR_pm_user="$pm_user@pam"
 export TF_VAR_pm_password=$pm_password
-export TF_VAR_terraform_ssh_key="path/to/terraform_key"
+export TF_VAR_terraform_ssh_key="$HOME/.ssh/terraform_key"
+export TF_VAR_terraform_password='TERRAFORM_PASSWORD'
+export TF_VAR_terraform_username="terraform"
+
+</details>
+
+Be sure to change values to fit your needs, especially the capitalized as these are placer values. Also, it's not recommended to store secrets in bashrc. In a future update, i'll be storing these in ansible vault and retrieving from there instead.
+
+## Initialization
+
+You'll need ```sh yq ``` for processing some data in the followin script:
+
+``` sh
+chmod +x scripts/copy_keys.sh
+./copy_keys.sh
+```
+
+This script will copy ssh keys for the admin user, ansible, and terraform so that they can each ssh into the proxmox host as root.
+
+## Ansible playbooks
+
+I have a series of playbooks that can be used to lay down the groundwork. With your variables declared and loaded into the environment, you can just execute these playbooks and have the whole infrastructure up and ready for configuration.
+
+Execute the playbooks in the following order:
+
+1. install_packages.yaml - Installs some packages needed on the Proxmox host.
+2. update_host.yaml - Updates and cleans up packages.
+3. create_storage.yaml - Creates storage on the Proxmox host.
+4. dl_isos.yaml - Downloads a few isos used for the infrastructure being deployed.
+5. disable_firewall.yaml - Disables the firewall on the Proxmox host (we'll be using pfSense for that)
+6. create_network.yaml - Creates the bridges needed for networking across the infrastructure.
+7. create_vms.yaml - Creates the VMs for the infrastructure.
+
+# TO DO
+
+1. Need to create images for the disk a VM will use.
+2. Need to create users on the proxmox host.

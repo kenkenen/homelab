@@ -1,0 +1,10 @@
+---
+packages:
+  - vim
+  - htop
+  - curl
+  - wget
+  - debian-goodies
+  - git
+  - nmap
+  - iperf3

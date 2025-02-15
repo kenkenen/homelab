@@ -1,0 +1,36 @@
+---
+- name: Install Recommended Packages on Proxmox
+  hosts: proxmox
+  gather_facts: true
+  become: yes
+  vars_files:
+    - "{{ lookup('env', 'HOME') }}/devops/github/homelab/IaC/ansible/inventory/group_vars/proxmox_packages.yaml"
+  tasks:
+    - name: Replace Proxmox Enterprise repository with Community repository
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/pve-no-subscription.list
+        content: |
+          deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription
+      notify: Update package list
+
+    - name: Remove Proxmox Enterprise repository
+      ansible.builtin.file:
+        path: /etc/apt/sources.list.d/pve-enterprise.list
+        state: absent
+      notify: Update package list
+
+    - name: Update package list
+      ansible.builtin.apt:
+        update_cache: yes
+      when: false  # This task will be triggered by the handlers
+
+    - name: Install recommended packages
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+      loop: "{{ packages }}"
+
+  handlers:
+    - name: Update package list
+      ansible.builtin.apt:
+        update_cache: yes
