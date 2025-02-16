@@ -4,49 +4,34 @@ This repository contains the configuration for a homelab setup using Proxmox as 
 
 ## Getting Started
 
-The first thing you'll want to do is deploy Proxmox VE onto some hardware. For the development of this repository, I used a virtual machine I created using Hyper-V on my Windows 11 laptop that meets the prereqs.
+If you're trying to set up an identical set up as mine and have a laptop that can handle it, expand the Setting up Yyper-V section and follow it for a quick set up.
 
 <details>
-<summary>Expand for prereqs info</summary>
+<summary>Setting up Hyper-V</summary>
 
-## Prerequisites for Running Proxmox as a VM
+If you have a laptop that can handle it, you can run the whole thing on Hyper-V on it. My 7th gen X1 carbon is dated and not a whole lot to rave about, but it handled the job well.
 
-To run Proxmox VE as a virtual machine for development purposes, ensure that you meet the following prerequisites:
+1. Enable Intel VT-x/VT-d in BIOS
+2. Install Hyper-V by opening `appwiz.cpl`, clicking `Turn Windows features on or off` -> Check `Hyper-V` -> Follow prompts and reboot to complete the install.
+3. Download [ProxMox ISO | https://enterprise.proxmox.com/iso/proxmox-ve_8.3-1.iso]
+4. Execute the powershell script in the scripts folder
+5. Run the `hyperv_init.ps1` powershell script
 
-### Hardware Requirements
-
-- **CPU**: Ensure that your host machine has a CPU that supports virtualization (e.g., Intel VT-x or AMD-V).
-- **Memory**: Allocate sufficient RAM for both the host machine and the Proxmox VM. A minimum of 4GB for Proxmox is recommended, but more may be needed depending on your use case.
-- **Storage**: Allocate enough disk space for the Proxmox VM and the VMs you plan to create within Proxmox.
-
-### Virtualization Software
-
-- **Hypervisor**: Use a hypervisor that supports nested virtualization, such as Hyper-V, VMware Workstation, or VirtualBox.
-- **Nested Virtualization**: Ensure that nested virtualization is enabled in your hypervisor settings.
-
-### Network Configuration
-
-- **Bridged Networking**: Configure the Proxmox VM to use bridged networking to ensure it can communicate with other devices on your network.
-- **Static IP**: Consider assigning a static IP address to the Proxmox VM for easier access and management.
-
-### Proxmox VE ISO
-
-- **Download**: Download the latest Proxmox VE ISO from the [official Proxmox website](https://www.proxmox.com/en/downloads).
-- **Installation**: Follow the [Proxmox installation guide](https://pve.proxmox.com/wiki/Installation) to install Proxmox VE on the VM.
-
-### Host Machine Configuration
-
-- **Resources**: Ensure that the host machine has enough resources (CPU, RAM, and disk space) to run both the host OS and the Proxmox VM efficiently.
-- **Virtualization Support**: Verify that virtualization support is enabled in the host machine's BIOS/UEFI settings.
+### Script Explanation:
+The script first defines the names for the external and internal switches, retrieves the network adapter connected to the internet, and creates an external switch using that adapter. It then creates an internal switch for private networking. The script proceeds to define the VM's name, ISO file path, memory size, and disk size, creating a new VM with these specifications. Secure boot is disabled for the VM, and a virtual hard disk is added. Three network adapters are attached to the VM: two to the external switch and one to the internal switch, with MAC address spoofing enabled for all three. Finally, the ISO file is set as the DVD drive for the VM.
 
 </details>
 
+The first thing you'll want to do is deploy Proxmox VE onto some hardware. For the development of this repository, I used a virtual machine I created using Hyper-V on my Windows 11 laptop that meets the prereqs. The instructions on using Hyper-V for this set up are above.
+
 ## Environment Variables
 
-You need to set the following environment variables. I set them in my bashrc so that it was loaded into the environment on start up. Add the following lines to your `.bashrc` or `.zshrc` file, replacing with the actual details for your environment:
+You need to set the following environment variables. I set them in my bashrc so that it was loaded into the environment on start up. 
+
+If you want to do the same, add the following lines to your `.bashrc` or `.zshrc` file, replacing with the actual details for your environment:
 
 <details>
-<summary>You need to set the following environment variables.</summary>
+<summary>Environment variables.</summary>
 
 ## Env
 export domain="DOMAIN"
@@ -96,33 +81,74 @@ export TF_VAR_terraform_username="terraform"
 
 Be sure to change values to fit your needs, especially the capitalized as these are placer values. Also, it's not recommended to store secrets in bashrc. In a future update, i'll be storing these in ansible vault and retrieving from there instead.
 
-## Initialization
+### Initialization
 
-You'll need ```sh yq ``` for processing some data in the followin script:
+I use Windows Subsystem Linux. You'll need `yq` for processing some data in the following script:
 
 ``` sh
 chmod +x scripts/copy_keys.sh
 ./copy_keys.sh
 ```
 
-This script will copy ssh keys for the admin user, ansible, and terraform so that they can each ssh into the proxmox host as root.
+This script will create ssh keys for the admin, ansible, and terraform users and copy them to the proxmox host.
 
-## Ansible playbooks
+### Ansible playbooks
 
-I have a series of playbooks that can be used to lay down the groundwork. With your variables declared and loaded into the environment, you can just execute these playbooks and have the whole infrastructure up and ready for configuration.
+Install Ansible
+
+``` sh
+sudo apt update && sudo apt install -y ansible
+```
+
+I have a series of playbooks that can be used to lay down the groundwork. 
+
+With your variables declared and loaded into the environment, you can just execute these playbooks and have proxmox up and ready for vm and container deployment.
 
 Execute the playbooks in the following order:
 
 1. install_packages.yaml - Installs some packages needed on the Proxmox host.
 2. update_host.yaml - Updates and cleans up packages.
 3. create_storage.yaml - Creates storage on the Proxmox host.
-4. dl_isos.yaml - Downloads a few isos used for the infrastructure being deployed.
+4. dl_isos.yaml - Downloads a few isos used for the infrastructure deployment.
 5. disable_firewall.yaml - Disables the firewall on the Proxmox host (we'll be using pfSense for that)
-6. create_network.yaml - Creates the bridges needed for networking across the infrastructure.
-7. create_vms.yaml - Creates the VMs for the infrastructure.
+6. create_network.yaml - Creates the bridges needed for networking across infrastructure deployed to proxmox.
+
+That's the basic initialization of the Proxmox host. It's now ready for VMs. Deploying VMs is better handled by terraform.
+
+### Terraform Deployment of VMs
+
+[Download Terraform | https://developer.hashicorp.com/terraform/install]
+
+Extract it to your bin ($HOME/bin) or wherever makes sense for you. Also download and install the Terraform Proxmox Provider:
+
+``` sh
+mkdir -p ~/.terraform.d/plugins
+wget -O ~/.terraform.d/plugins/terraform-provider-proxmox https://github.com/Telmate/terraform-provider-proxmox/releases/latest/download/terraform-provider-proxmox-linux-amd64
+chmod +x ~/.terraform.d/plugins/terraform-provider-proxmox
+```
+
+In the proxmox_init folder, we have  a config file `main.tf` for the deployment of all of the VMs described in the variables file `terraform.tfvars`.
+
+- pfSense VM - Handles firewall, routing, and DNS for the home network (if configured to do so) and all the VMs and Containers to be deployed in the DEV, UAT, and PROD environments.
+- Lubuntu VM - A workstation connected to all the networks. Can be used for visibility from the inside.
+- Ubuntu VM- Kubernetes host. I wanted a separate kubernetes environment instead of using Proxmox container platform.
+
+Navigate to the folder and initiate terraform
+
+``` sh
+terraform init
+```
+
+Then execute the terraform plan and apply to deploy the listed VMs
+
+``` sh
+terraform plan
+terraform apply
+```
+
+That's it! The VMs will be deployed and started, ready for configuration.
 
 # TO DO
 
-1. Add manual instructions or a powershell script for configuring Hyper-V
-2. Need to create images for the disk a VM will use.
-3. Need to create users on the proxmox host.
+1. Need to set up playbook to create admin, user, guest, ansible, and terraform users on target host as required.
+2. Set up the Cent OS host with k8s.
