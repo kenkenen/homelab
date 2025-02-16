@@ -13,3 +13,12 @@ vms:
       - bridge: vmbr10
       - bridge: vmbr20
       - bridge: vmbr30
+  - name: ubuntu_24.04_desktop
+    dns_name: ubuntu2404desktop
+    vmid: 101
+    cpu: 1
+    memory: 1024
+    disk_size: 8G
+    os_type: l26
+    networks:
+      - bridge: vmbr02
