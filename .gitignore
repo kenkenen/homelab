@@ -6,6 +6,5 @@
 
 .terraform*
 IaC/ansible/files/configs/pfsenseconfigs.xml
-.gitignore
 todo*
-IaC/terraform
+IaC/terraform/
