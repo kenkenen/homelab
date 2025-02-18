@@ -102,7 +102,7 @@ sudo apt update && sudo apt install -y ansible
 
 I have a series of playbooks that can be used to lay down the groundwork. 
 
-With your variables declared and loaded into the environment, you can just execute these playbooks and have proxmox configured and running with a pfSense router and three Ubuntu servers ready for setting up your Kubernetes environments.
+With your variables declared and loaded into the environment, you can just execute these playbooks and have proxmox configured and running with a pfSense router and an Ubuntu server ready for setting up your Kubernetes environments.
 
 Execute the playbooks in the following order:
 
