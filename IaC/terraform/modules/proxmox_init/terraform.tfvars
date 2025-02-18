@@ -32,7 +32,7 @@ vms = [
     iso_file   = "local:iso/lubuntu-24.04.1-desktop-amd64.iso"
   },
   {
-    name       = "centosstream10"
+    name       = "ubuntu2404"
     vmid       = 102
     memory     = 2048
     cores      = 2
@@ -41,6 +41,6 @@ vms = [
     networks   = [
       { bridge = "vmbr10" }
     ]
-    iso_file   = "local:iso/CentOS-Stream-10-latest-x86_64-dvd1.iso"
+    iso_file   = "local:iso/ubuntu-24.04.1-live-server-amd64.iso"
   }
 ]

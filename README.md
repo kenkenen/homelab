@@ -102,53 +102,20 @@ sudo apt update && sudo apt install -y ansible
 
 I have a series of playbooks that can be used to lay down the groundwork. 
 
-With your variables declared and loaded into the environment, you can just execute these playbooks and have proxmox up and ready for vm and container deployment.
+With your variables declared and loaded into the environment, you can just execute these playbooks and have proxmox configured and running with a pfSense router and three Ubuntu servers ready for setting up your Kubernetes environments.
 
 Execute the playbooks in the following order:
 
-1. install_packages.yaml - Installs some packages needed on the Proxmox host.
-2. update_host.yaml - Updates and cleans up packages.
-3. create_storage.yaml - Creates storage on the Proxmox host.
-4. dl_isos.yaml - Downloads a few isos used for the infrastructure deployment.
-5. disable_firewall.yaml - Disables the firewall on the Proxmox host (we'll be using pfSense for that)
-6. create_network.yaml - Creates the bridges needed for networking across infrastructure deployed to proxmox.
+1. update_host.yaml - Updates and cleans up packages.
+2. create_storage.yaml - Creates storage on the Proxmox host.
+3. dl_isos.yaml - Downloads a few isos used for the infrastructure deployment.
+4. disable_firewall.yaml - Disables the firewall on the Proxmox host (we'll be using pfSense for hat)
+5. create_network.yaml - Creates the bridges needed for networking across infrastructure deployed to proxmox.
+6. create_confs.yaml - Loads the configuration files in the IaC/ansible/files/configs folder to an iso to be mounted on the VMs configured for it (pfSense)
+7. create_vms.yaml - Deploys the VMs with an unattended install of pfSense.
 
-That's the basic initialization of the Proxmox host. It's now ready for VMs. Deploying VMs is better handled by terraform.
-
-### Terraform Deployment of VMs
-
-[Download Terraform | https://developer.hashicorp.com/terraform/install]
-
-Extract it to your bin ($HOME/bin) or wherever makes sense for you. Also download and install the Terraform Proxmox Provider:
-
-``` sh
-mkdir -p ~/.terraform.d/plugins
-wget -O ~/.terraform.d/plugins/terraform-provider-proxmox https://github.com/Telmate/terraform-provider-proxmox/releases/latest/download/terraform-provider-proxmox-linux-amd64
-chmod +x ~/.terraform.d/plugins/terraform-provider-proxmox
-```
-
-In the proxmox_init folder, we have  a config file `main.tf` for the deployment of all of the VMs described in the variables file `terraform.tfvars`.
-
-- pfSense VM - Handles firewall, routing, and DNS for the home network (if configured to do so) and all the VMs and Containers to be deployed in the DEV, UAT, and PROD environments.
-- Lubuntu VM - A workstation connected to all the networks. Can be used for visibility from the inside.
-- Ubuntu VM- Kubernetes host. I wanted a separate kubernetes environment instead of using Proxmox container platform.
-
-Navigate to the folder and initiate terraform
-
-``` sh
-terraform init
-```
-
-Then execute the terraform plan and apply to deploy the listed VMs
-
-``` sh
-terraform plan
-terraform apply
-```
-
-That's it! The VMs will be deployed and started, ready for configuration.
+That's it! You should have a pfSense router accessible through https via the WAN address and an ubuntu server behind the firewall. The Ubuntu server should be waiting to be installed. In the future, I'll use a cloud-init installation of Ubuntu with Kubernetes set up.
 
 # TO DO
 
-1. Need to set up playbook to create admin, user, guest, ansible, and terraform users on target host as required.
-2. Set up the Cent OS host with k8s.
+1. Create cloud_init for Ubuntu server with Kubernetes set up

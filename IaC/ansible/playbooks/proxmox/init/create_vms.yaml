@@ -1,0 +1,88 @@
+---
+- name: Create VMs on Proxmox
+  hosts: proxmox
+  become: yes
+  vars_files:
+    - "{{ lookup('env', 'HOME') }}/devops/github/homelab/IaC/ansible/inventory/group_vars/proxmox_vms.yaml"
+  tasks:
+    - name: Create VM
+      shell: |
+        qm create {{ item.vmid }} --name {{ item.dns_name }} --memory {{ item.memory }} --cores {{ item.cpu }} \
+        --net0 virtio,bridge={{ item.networks[0].bridge }} {% for net in item.networks[1:] %} --net{{ loop.index }} \
+        virtio,bridge={{ net.bridge }} {% endfor %} --ostype {{ item.os_type }} --scsihw virtio-scsi-pci \
+        --bootdisk scsi0 --scsi0 local-lvm:{{ item.disk_size }} --agent 1
+      loop: "{{ vms }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Attach ISO files
+      shell: |
+        qm set {{ item.vmid }} --ide2 local:iso/{{ item.iso }},media=cdrom {% if item.iso2 is defined %} --ide3 local:iso/{{ item.iso2 }},media=cdrom {% endif %}
+      loop: "{{ vms }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Set boot order
+      shell: |
+        qm set {{ item.vmid }} --boot order="ide2;scsi0"
+      loop: "{{ vms }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Start pfSense VM for Unattended Installation
+      shell: |
+        qm start {{ item.vmid }} && \
+        sleep 45
+      when: item.name == "pfsense_2.7.2"
+      loop: "{{ vms }}"
+      loop_control:
+        label: "{{ item.name }}"
+    
+    - name: Unattended installation for pfSense
+      shell: |
+        qm sendkey 100 ret && sleep 1 && \
+        qm sendkey 100 ret && sleep 1 && \
+        qm sendkey 100 ret && sleep 1 && \
+        qm sendkey 100 ret && sleep 1 && \
+        qm sendkey 100 ret && sleep 1 && \
+        qm sendkey 100 spc && sleep 1 && \
+        qm sendkey 100 ret && sleep 1 && \
+        qm sendkey 100 left && sleep 1 && \
+        qm sendkey 100 ret && sleep 45 && \
+        qm sendkey 100 ret && sleep 5 && \
+        qm set 100 -delete ide2 && \
+        qm stop 100 && \
+        qm start 100 && \
+        sleep 45 && \
+        qm sendkey 100 ctrl-c && sleep 1 && \
+        qm sendkey 100 ret && sleep 1 && \
+        qm sendkey 100 m-k-d-i-r-spc-minus-p-spc-slash-m-n-t-slash-i-s-o-ret && sleep 1 && \
+        qm sendkey 100 m-o-u-n-t-spc-minus-t-spc-c-d-9-6-6-0-spc-slash-d-e-v-slash-c-d-0-spc-slash-m-n-t-slash-i-s-o-ret && sleep 1 && \
+        qm sendkey 100 c-p-spc-slash-m-n-t-slash-i-s-o-slash-p-f-s-e-n-s-e-c-dot-x-m-l-spc-slash-c-f-slash-c-o-n-f-slash-c-o-n-f-i-g-dot-x-m-l-ret && sleep 5 && \
+        qm reset 100
+      when: item.name == "pfsense_2.7.2"
+      loop: "{{ vms }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Import pfSense configuration files
+      shell: |
+        sleep 45 && \
+        qm sendkey 100 ctrl-c && sleep 1 && \
+        qm sendkey 100 ret && sleep 1 && \
+        qm sendkey 100 m-k-d-i-r-spc-minus-p-spc-slash-m-n-t-slash-i-s-o-ret && sleep 1 && \
+        qm sendkey 100 m-o-u-n-t-spc-minus-t-spc-c-d-9-6-6-0-spc-slash-d-e-v-slash-c-d-0-spc-slash-m-n-t-slash-i-s-o-ret && sleep 1 && \
+        qm sendkey 100 c-p-spc-slash-m-n-t-slash-i-s-o-slash-p-f-s-e-n-s-e-c-dot-x-m-l-spc-slash-c-f-slash-c-o-n-f-slash-c-o-n-f-i-g-dot-x-m-l-ret && sleep 5 && \
+        qm reset 100
+      when: item.name == "pfsense_2.7.2"
+      loop: "{{ vms }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Start VM
+      shell: |
+        qm start {{ item.vmid }}
+      when: item.name != "pfsense_2.7.2"
+      loop: "{{ vms }}"
+      loop_control:
+        label: "{{ item.name }}"

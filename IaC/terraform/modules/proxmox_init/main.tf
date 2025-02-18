@@ -8,13 +8,11 @@ provider "proxmox" {
 variable "pm_user" {
   description = "Proxmox user"
   type        = string
-  default     = ""
 }
 
 variable "pm_password" {
   description = "Proxmox password"
   type        = string
-  default     = ""
 }
 
 variable "vms" {
@@ -51,7 +49,7 @@ resource "proxmox_vm_qemu" "vm" {
   cores      = var.vms[count.index].cores
   scsihw     = "virtio-scsi-pci"
   bootdisk   = "scsi0"
-  agent      = 0  # Disable QEMU guest agent
+  agent      = 1
   os_type    = var.vms[count.index].os_type
   target_node = "pve"  # Replace with the actual hostname or IP address of your Proxmox node
   boot        = "order=ide2;scsi0"
@@ -62,7 +60,7 @@ resource "proxmox_vm_qemu" "vm" {
     storage      = "local-lvm"
   }
 
-  ide2 = "${var.vms[count.index].iso_file},media=cdrom"
+  iso = "${var.vms[count.index].iso_file}"
 
   dynamic "network" {
     for_each = var.vms[count.index].networks

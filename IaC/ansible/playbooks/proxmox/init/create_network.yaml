@@ -22,20 +22,18 @@
       loop_control:
         loop_var: item
 
-    - name: Flush handlers
-      meta: flush_handlers
-
-    - name: Restart networking service
-      ansible.builtin.service:
-        name: networking
-        state: restarted
+    - name: Reboot the server
+      ansible.builtin.reboot:
+        reboot_timeout: 600
 
     - name: Wait for the server to come back online
       ansible.builtin.wait_for_connection:
         timeout: 300
 
-  handlers:
-    - name: Restart networking
-      ansible.builtin.service:
-        name: networking
-        state: restarted
+    - name: Ensure the server is fully up and running
+      ansible.builtin.command:
+        cmd: uptime
+      register: uptime_result
+      until: uptime_result.rc == 0
+      retries: 5
+      delay: 10

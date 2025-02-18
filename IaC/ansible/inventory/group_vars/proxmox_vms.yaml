@@ -5,7 +5,7 @@ vms:
     vmid: 100
     cpu: 1
     memory: 512
-    disk_size: 8G
+    disk_size: 8
     os_type: other
     networks:
       - bridge: vmbr01
@@ -13,12 +13,35 @@ vms:
       - bridge: vmbr10
       - bridge: vmbr20
       - bridge: vmbr30
-  - name: ubuntu_24.04_desktop
-    dns_name: ubuntu2404desktop
+    iso: pfSense-CE-2.7.2-RELEASE-amd64.iso
+    iso2: configs.iso
+  - name: ubuntu_24.04_dev
+    dns_name: ubuntu2404dev
     vmid: 101
     cpu: 1
-    memory: 1024
-    disk_size: 8G
+    memory: 2048
+    disk_size: 8
     os_type: l26
     networks:
-      - bridge: vmbr02
+      - bridge: vmbr10
+    iso: ubuntu-24.04.1-live-server-amd64.iso
+  # - name: ubuntu_24.04_uat
+  #   dns_name: ubuntu2404uat
+  #   vmid: 102
+  #   cpu: 8
+  #   memory: 65536
+  #   disk_size: 8
+  #   os_type: l26
+  #   networks:
+  #     - bridge: vmbr20
+  #   iso: ubuntu-24.04.1-live-server-amd64.iso
+  # - name: ubuntu_24.04_prod
+  #   dns_name: ubuntu2404prod
+  #   vmid: 103
+  #   cpu: 16
+  #   memory: 131072
+  #   disk_size: 8
+  #   os_type: l26
+  #   networks:
+  #     - bridge: vmbr30
+  #   iso: ubuntu-24.04.1-live-server-amd64.iso

@@ -1,13 +1,11 @@
-# Ignore SSH keys
 *.pem
 *.key
 *.pub
-
-# Ignore backup files
 *.bak
 *.swp
 
-# terraform
-
 .terraform*
-
+IaC/ansible/files/configs/pfsenseconfigs.xml
+.gitignore
+todo*
+IaC/terraform

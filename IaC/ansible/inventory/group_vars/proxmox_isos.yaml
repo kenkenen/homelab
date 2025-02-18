@@ -1,6 +1,4 @@
 ---
-local:
-  - dl_dir: "{{ lookup('env', 'HOME') }}/Downloads"
 iso_files:
   - name: ubuntu_24.04
     url: https://mirror.arizona.edu/ubuntu-releases/24.04/ubuntu-24.04.1-live-server-amd64.iso
@@ -22,7 +20,7 @@ iso_files:
   #   url: https://mirror.arizona.edu/ubuntu-releases/24.04/ubuntu-24.04.1-desktop-amd64.iso
   #   dest: /var/lib/vz/template/iso
   #   filename: ubuntu-24.04.1-desktop-amd64.iso
-  - name: lubuntu_24.04
-    url: https://cdimage.ubuntu.com/lubuntu/releases/24.04.1/release/lubuntu-24.04.1-desktop-amd64.iso
-    dest: /var/lib/vz/template/iso
-    filename: lubuntu-24.04.1-desktop-amd64.iso
+  # - name: lubuntu_24.04
+  #   url: https://cdimage.ubuntu.com/lubuntu/releases/24.04.1/release/lubuntu-24.04.1-desktop-amd64.iso
+  #   dest: /var/lib/vz/template/iso
+  #   filename: lubuntu-24.04.1-desktop-amd64.iso

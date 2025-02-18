@@ -1,0 +1,3 @@
+configs:
+  - name: pfsense
+    file: "{{ lookup('env', 'HOME') }}/devops/github/homelab/IaC/ansible/files/configs/pfsenseconfigs.xml"

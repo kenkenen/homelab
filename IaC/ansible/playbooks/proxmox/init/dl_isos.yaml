@@ -5,13 +5,9 @@
   vars_files:
     - "{{ lookup('env', 'HOME') }}/devops/github/homelab/IaC/ansible/inventory/group_vars/proxmox_isos.yaml"
   tasks:
-    - name: Set download directory variable
-      ansible.builtin.set_fact:
-        dl_dir: "{{ local[0].dl_dir }}"
-
     - name: Check if ISO file exists locally
       ansible.builtin.stat:
-        path: "{{ dl_dir }}/{{ item.filename }}"
+        path: "{{ lookup('env', 'downloads_directory') }}/{{ item.filename }}"
       with_items: "{{ iso_files }}"
       register: local_iso_stats
       delegate_to: localhost
@@ -24,9 +20,9 @@
 
     - name: Copy ISO files from local machine if they exist and not on target host
       ansible.builtin.copy:
-        src: "{{ dl_dir }}/{{ item.item.filename }}"
+        src: "{{ lookup('env', 'downloads_directory') }}/{{ item.item.filename }}"
         dest: "{{ item.item.dest }}/{{ item.item.filename }}"
-      when: item.stat.exists and not item.item.stat.exists
+      when: item.stat.exists and not (iso_stats.results | selectattr('item.filename', 'equalto', item.item.filename) | map(attribute='stat.exists') | first)
       with_items: "{{ local_iso_stats.results }}"
       become: yes
 

@@ -1,0 +1,25 @@
+---
+- name: Create configuration files on Proxmox Host
+  hosts: proxmox
+  gather_facts: true
+  become: yes
+  vars_files:
+    - "{{ lookup('env', 'HOME') }}/devops/github/homelab/IaC/ansible/inventory/group_vars/proxmox_configs.yaml"
+  tasks:
+    - name: Ensure configuration directory exists
+      ansible.builtin.file:
+        path: /tmp/configs
+        state: directory
+        mode: '0755'
+
+    - name: Create configuration files
+      ansible.builtin.copy:
+        src: "{{ item.file }}"
+        dest: "/tmp/configs/{{ item.name }}configs.xml"
+      loop: "{{ configs }}"
+
+    - name: Create ISO image with configuration files
+      ansible.builtin.shell: |
+        genisoimage -o /var/lib/vz/template/iso/configs.iso $(find /tmp/configs -name '*configs.xml')
+      args:
+        creates: /var/lib/vz/template/iso/configs.iso
