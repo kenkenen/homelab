@@ -1,6 +1,6 @@
 # homelab
 
-This repository contains the configuration for a homelab setup using Proxmox as a VM host. The goal is to create a robust and flexible environment for deploying and managing various services commonly used in a home setting, such as OwnCloud, Plex, and more. The setup includes a CI/CD implementation for managing the deployment of these containerized services onto Kubernetes.
+This repository contains the configuration for a homelab setup using Proxmox as a VM host. The goal is to create structured infrastructure for deploying containerized applications into a DEV, UAT, and PROD environment. The structured infrastructure is perfect for the implementation of pipelines to deploy developed containers to a DEV environment and progressively promote the deployments to the upper level environments using typical SDLC methodologies.
 
 ## Getting Started
 
