@@ -1,9 +1,9 @@
 ---
-ansible_user: "{{ lookup('env', 'pm_user') }}"
-ansible_password: "{{ lookup('env', 'pm_password') }}"
+ansible_user: "{{ lookup('env', 'PM_USER') }}"
+ansible_password: "{{ lookup('env', 'PM_PASSWORD') }}"
 ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
-ansible_ssh_private_key_file: "{{ lookup('env', 'ansible_ssh_key') }}"
-proxmox_user: "{{ lookup('env', 'pm_user') }}"
-proxmox_password: "{{ lookup('env', 'pm_password') }}"
-proxmox_host: "{{ lookup('env', 'pm_address') }}"
+ansible_ssh_private_key_file: "{{ lookup('env', 'ANSIBLE_SSH_KEY') }}"
+proxmox_user: "{{ lookup('env', 'PM_USER') }}"
+proxmox_password: "{{ lookup('env', 'PM_PASSWORD') }}"
+proxmox_host: "{{ lookup('env', 'PM_ADDRESS') }}"
 proxmox_node: pve

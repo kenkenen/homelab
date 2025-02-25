@@ -1,19 +1,10 @@
 ---
 users:
   - name: admin
-    password: "${admin_password}"
-    role: Administrator
-    username: "${admin_username}"
-    path: "${admin_ssh_key}"
+    username: "${ADMIN_USERNAME}"
+    password: "${ADMIN_PASSWORD}"
+    email: "${ADMIN_USERNAME}@${DOMAIN}.com"
+    ssh_key_path: "${ADMIN_SSH_KEY}"
   - name: ansible
-    password: "${ansible_password}"
-    role: Administrator
-    username: "${ansible_username}"
-    path: "${ansible_ssh_key}"
-    email: "ansible@${domain}"
-  - name: terraform
-    password: "${TF_VAR_terraform_password}"
-    role: Administrator
-    username: "${TF_VAR_terraform_username}"
-    path: "${TF_VAR_terraform_ssh_key}"
-    email: "terraform@${domain}"
+    email: "ansible@${DOMAIN}.com"
+    ssh_key_path: "${ANSIBLE_SSH_KEY}"

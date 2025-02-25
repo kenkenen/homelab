@@ -1,0 +1,19 @@
+envs:
+  - name: DEV
+    hostname: k8sdev
+    adminuser: devadmin
+    adminpassword: "{{ lookup('env', 'ROOT_PASSWORD') }}"
+    sshkey: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/id_rsa.pub') }}"
+    subnet: 10
+  - name: UAT
+    hostname: k8suat
+    adminuser: uatadmin
+    adminpassword: "{{ lookup('env', 'ROOT_PASSWORD') }}"
+    sshkey: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/id_rsa.pub') }}"
+    subnet: 20
+  - name: PROD
+    hostname: k8sprod
+    adminuser: prodadmin
+    adminpassword: "{{ lookup('env', 'ROOT_PASSWORD') }}"
+    sshkey: "{{ lookup('file', lookup('env', 'HOME') + '/.ssh/id_rsa.pub') }}"
+    subnet: 30

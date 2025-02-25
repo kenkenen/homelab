@@ -13,35 +13,49 @@ vms:
       - bridge: vmbr10
       - bridge: vmbr20
       - bridge: vmbr30
-    iso: pfSense-CE-2.7.2-RELEASE-amd64.iso
-    iso2: configs.iso
-  - name: ubuntu_24.04_dev
-    dns_name: ubuntu2404dev
+    isos: 
+      - pfSense-CE-2.7.2-RELEASE-amd64.iso
+      - configs.iso
+    bootorder: ide2;scsi0
+  - name: k8sdev
+    dns_name: k8sdev
     vmid: 101
-    cpu: 1
+    cpu: 2
     memory: 2048
     disk_size: 8
     os_type: l26
     networks:
       - bridge: vmbr10
-    iso: ubuntu-24.04.1-live-server-amd64.iso
-  # - name: ubuntu_24.04_uat
-  #   dns_name: ubuntu2404uat
-  #   vmid: 102
-  #   cpu: 8
-  #   memory: 65536
-  #   disk_size: 8
-  #   os_type: l26
-  #   networks:
-  #     - bridge: vmbr20
-  #   iso: ubuntu-24.04.1-live-server-amd64.iso
-  # - name: ubuntu_24.04_prod
-  #   dns_name: ubuntu2404prod
-  #   vmid: 103
-  #   cpu: 16
-  #   memory: 131072
-  #   disk_size: 8
-  #   os_type: l26
-  #   networks:
-  #     - bridge: vmbr30
-  #   iso: ubuntu-24.04.1-live-server-amd64.iso
+    isos: 
+      - cloud-init
+    imgs: 
+      - noble-server-cloudimg-amd64.img
+    bootorder: scsi0
+  - name: k8suat
+    dns_name: k8suat
+    vmid: 102
+    cpu: 2
+    memory: 2048
+    disk_size: 8
+    os_type: l26
+    networks:
+      - bridge: vmbr10
+    isos: 
+      - cloud-init
+    imgs: 
+      - noble-server-cloudimg-amd64.img
+    bootorder: scsi0
+  - name: k8sprod
+    dns_name: k8sprod
+    vmid: 103
+    cpu: 2
+    memory: 2048
+    disk_size: 8
+    os_type: l26
+    networks:
+      - bridge: vmbr10
+    isos: 
+      - cloud-init
+    imgs: 
+      - noble-server-cloudimg-amd64.img
+    bootorder: scsi0

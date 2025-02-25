@@ -9,3 +9,6 @@ storage:
   - name: backup
     path: /var/lib/vz/backup
     content: backup
+  - name: snippets
+    path: /var/lib/vz/snippets
+    content: snippets

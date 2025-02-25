@@ -12,11 +12,22 @@
         state: directory
         mode: '0755'
 
+    - name: Clear existing configuration files
+      ansible.builtin.shell: |
+        rm -Rf /tmp/configs/* && \
+        rm -Rf /var/lib/vz/template/iso/configs.iso
+
     - name: Create configuration files
-      ansible.builtin.copy:
+      ansible.builtin.template:
         src: "{{ item.file }}"
         dest: "/tmp/configs/{{ item.name }}configs.xml"
       loop: "{{ configs }}"
+      loop_control:
+        loop_var: item
+      vars:
+        DOMAIN: "{{ lookup('env', 'DOMAIN') }}"
+        NETWORK: "{{ lookup('env', 'NETWORK') }}"
+        BCRYPT_HASH: "{{ lookup('env', 'BCRYPT_HASH')  }}"
 
     - name: Create ISO image with configuration files
       ansible.builtin.shell: |

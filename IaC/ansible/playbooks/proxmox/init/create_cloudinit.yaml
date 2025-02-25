@@ -1,0 +1,54 @@
+- name: Generate Cloud-Init Files
+  hosts: localhost
+  vars_files:
+    - /home/kltej/devops/github/homelab/IaC/ansible/files/cloud-init/ubuntu-k8s-setup/envs.yaml
+  vars:
+    environments: "{{ envs }}"
+  tasks:
+    - name: Generate Cloud-Init file for each environment
+      template:
+        src: /home/kltej/devops/github/homelab/IaC/ansible/files/cloud-init/ubuntu-k8s-setup/cloud-init.yaml
+        dest: "/tmp/cloud-init-k8s{{ item.name | lower }}.yaml"
+      loop: "{{ environments }}"
+      loop_control:
+        loop_var: item
+      vars:
+        hostname: "{{ item.hostname }}"
+        adminuser: "{{ item.adminuser }}"
+        adminpassword: "{{ item.adminpassword }}"
+        sshkey: "{{ item.sshkey }}"
+        subnet: "{{ item.subnet }}"
+
+- name: Transfer Cloud-Init Files to Proxmox
+  hosts: proxmox
+  become: yes
+  vars_files:
+    - /home/kltej/devops/github/homelab/IaC/ansible/files/cloud-init/ubuntu-k8s-setup/envs.yaml
+  vars:
+    environments: "{{ envs }}"
+  tasks:
+    - name: Transfer Cloud-Init files
+      ansible.builtin.copy:
+        src: "/tmp/cloud-init-k8s{{ item.name | lower }}.yaml"
+        dest: "/var/lib/vz/snippets/cloud-init-k8s{{ item.name | lower }}.yaml"
+        owner: root
+        group: root
+        mode: '0644'
+      loop: "{{ environments }}"
+      loop_control:
+        loop_var: item
+
+- name: Clean up local Cloud-Init files
+  hosts: localhost
+  vars_files:
+    - /home/kltej/devops/github/homelab/IaC/ansible/files/cloud-init/ubuntu-k8s-setup/envs.yaml
+  vars:
+    environments: "{{ envs }}"
+  tasks:
+    - name: Remove local Cloud-Init files
+      ansible.builtin.file:
+        path: "/tmp/cloud-init-k8s{{ item.name | lower }}.yaml"
+        state: absent
+      loop: "{{ environments }}"
+      loop_control:
+        loop_var: item

@@ -5,26 +5,39 @@
   vars_files:
     - "{{ lookup('env', 'HOME') }}/devops/github/homelab/IaC/ansible/inventory/group_vars/proxmox_vms.yaml"
   tasks:
-    - name: Create VM
+    ### pfSense Deployment ###
+    - name: Create pfSense VM
       shell: |
         qm create {{ item.vmid }} --name {{ item.dns_name }} --memory {{ item.memory }} --cores {{ item.cpu }} \
         --net0 virtio,bridge={{ item.networks[0].bridge }} {% for net in item.networks[1:] %} --net{{ loop.index }} \
         virtio,bridge={{ net.bridge }} {% endfor %} --ostype {{ item.os_type }} --scsihw virtio-scsi-pci \
         --bootdisk scsi0 --scsi0 local-lvm:{{ item.disk_size }} --agent 1
+      when: item.name == "pfsense_2.7.2"
       loop: "{{ vms }}"
       loop_control:
         label: "{{ item.name }}"
 
-    - name: Attach ISO files
+    - name: Attach ISO or IMG files
       shell: |
-        qm set {{ item.vmid }} --ide2 local:iso/{{ item.iso }},media=cdrom {% if item.iso2 is defined %} --ide3 local:iso/{{ item.iso2 }},media=cdrom {% endif %}
+        {% if item.isos is defined %}
+          {% for iso in item.isos %}
+            qm set {{ item.vmid }} --ide{{ loop.index + 1 }} local:iso/{{ iso }},media=cdrom
+          {% endfor %}
+        {% endif %}
+        {% if item.imgs is defined %}
+          {% for img in item.imgs %}
+            qm set {{ item.vmid }} --scsi{{ loop.index + 1 }} local:{{ img }}
+          {% endfor %}
+        {% endif %}
+      when: item.name == "pfsense_2.7.2"
       loop: "{{ vms }}"
       loop_control:
         label: "{{ item.name }}"
 
     - name: Set boot order
       shell: |
-        qm set {{ item.vmid }} --boot order="ide2;scsi0"
+        qm set {{ item.vmid }} --boot order="{{ item.bootorder }}"
+      when: item.name == "pfsense_2.7.2"
       loop: "{{ vms }}"
       loop_control:
         label: "{{ item.name }}"
@@ -52,14 +65,7 @@
         qm sendkey 100 ret && sleep 5 && \
         qm set 100 -delete ide2 && \
         qm stop 100 && \
-        qm start 100 && \
-        sleep 45 && \
-        qm sendkey 100 ctrl-c && sleep 1 && \
-        qm sendkey 100 ret && sleep 1 && \
-        qm sendkey 100 m-k-d-i-r-spc-minus-p-spc-slash-m-n-t-slash-i-s-o-ret && sleep 1 && \
-        qm sendkey 100 m-o-u-n-t-spc-minus-t-spc-c-d-9-6-6-0-spc-slash-d-e-v-slash-c-d-0-spc-slash-m-n-t-slash-i-s-o-ret && sleep 1 && \
-        qm sendkey 100 c-p-spc-slash-m-n-t-slash-i-s-o-slash-p-f-s-e-n-s-e-c-dot-x-m-l-spc-slash-c-f-slash-c-o-n-f-slash-c-o-n-f-i-g-dot-x-m-l-ret && sleep 5 && \
-        qm reset 100
+        qm start 100
       when: item.name == "pfsense_2.7.2"
       loop: "{{ vms }}"
       loop_control:
@@ -73,16 +79,58 @@
         qm sendkey 100 m-k-d-i-r-spc-minus-p-spc-slash-m-n-t-slash-i-s-o-ret && sleep 1 && \
         qm sendkey 100 m-o-u-n-t-spc-minus-t-spc-c-d-9-6-6-0-spc-slash-d-e-v-slash-c-d-0-spc-slash-m-n-t-slash-i-s-o-ret && sleep 1 && \
         qm sendkey 100 c-p-spc-slash-m-n-t-slash-i-s-o-slash-p-f-s-e-n-s-e-c-dot-x-m-l-spc-slash-c-f-slash-c-o-n-f-slash-c-o-n-f-i-g-dot-x-m-l-ret && sleep 5 && \
-        qm reset 100
+        qm reset 100 && \
+        sleep 30
       when: item.name == "pfsense_2.7.2"
       loop: "{{ vms }}"
       loop_control:
         label: "{{ item.name }}"
+    ### End of pfSense Deployment ###
 
-    - name: Start VM
+    ### k8s Environment Deployments ###
+    - name: k8s - Create VMs
+      shell: |
+        qm create {{ item.vmid }} --name {{ item.name }} --memory {{ item.memory }} --cores {{ item.cpu }} --net0 virtio,bridge={{ item.networks[0].bridge }}
+      loop: "{{ vms | selectattr('name', 'search', 'k8s') | list }}"
+
+    - name: k8s - Import disk image
+      shell: |
+        qm importdisk {{ item.vmid }} /var/lib/vz/images/{{ item.imgs[0] }} local-lvm
+      loop: "{{ vms | selectattr('name', 'search', 'k8s') | list }}"
+      when: item.imgs is defined
+
+    - name: k8s - Attach disks
+      shell: |
+        qm set {{ item.vmid }} --scsihw virtio-scsi-pci --scsi1 local-lvm:vm-{{ item.vmid }}-disk-0,size=8G
+      loop: "{{ vms | selectattr('name', 'search', 'k8s') | list }}"
+
+    - name: k8s - Resize disk to desired size
+      shell: |
+        qm resize {{ item.vmid }} scsi1 {{ item.disk_size }}G
+      loop: "{{ vms | selectattr('name', 'search', 'k8s') | list }}"
+
+    - name: k8s - Attach Cloud-Init drive
+      shell: |
+        qm set {{ item.vmid }} --ide2 local-lvm:cloudinit
+      loop: "{{ vms | selectattr('name', 'search', 'k8s') | list }}"
+
+    - name: k8s - Set boot options
+      shell: |
+        qm set {{ item.vmid }} --boot c --bootdisk scsi0
+      loop: "{{ vms | selectattr('name', 'search', 'k8s') | list }}"
+
+    - name: k8s - Configure serial and VGA options
+      shell: |
+        qm set {{ item.vmid }} --serial0 socket --vga serial0
+      loop: "{{ vms | selectattr('name', 'search', 'k8s') | list }}"
+
+    - name: k8s - Apply Cloud-Init custom configuration
+      shell: |
+        qm set {{ item.vmid }} --cicustom "user=local:snippets/cloud-init-{{ item.dns_name }}.yaml"
+      loop: "{{ vms | selectattr('name', 'search', 'k8s') | list }}"
+
+    - name: k8s - Start VMs
       shell: |
         qm start {{ item.vmid }}
-      when: item.name != "pfsense_2.7.2"
-      loop: "{{ vms }}"
-      loop_control:
-        label: "{{ item.name }}"
+      loop: "{{ vms | selectattr('name', 'search', 'k8s') | list }}"
+    ### End of k8s Environment Deployments ###

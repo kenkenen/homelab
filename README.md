@@ -20,102 +20,138 @@ If you have a laptop that can handle it, you can run the whole thing on Hyper-V 
 ### Script Explanation:
 The script first defines the names for the external and internal switches, retrieves the network adapter connected to the internet, and creates an external switch using that adapter. It then creates an internal switch for private networking. The script proceeds to define the VM's name, ISO file path, memory size, and disk size, creating a new VM with these specifications. Secure boot is disabled for the VM, and a virtual hard disk is added. Three network adapters are attached to the VM: two to the external switch and one to the internal switch, with MAC address spoofing enabled for all three. Finally, the ISO file is set as the DVD drive for the VM.
 
+Follow through with the installation of Proxmox VE via the console and proceed with the next steps.
+
 </details>
 
 The first thing you'll want to do is deploy Proxmox VE onto some hardware. For the development of this repository, I used a virtual machine I created using Hyper-V on my Windows 11 laptop that meets the prereqs. The instructions on using Hyper-V for this set up are above.
 
 ## Environment Variables
 
-You need to set the following environment variables. I set them in my bashrc so that it was loaded into the environment on start up. 
+You need to set the following environment variables. I've loaded them all into an ansible vault and have a function in my bashrc to load them into the environment.
 
-If you want to do the same, add the following lines to your `.bashrc` or `.zshrc` file, replacing with the actual details for your environment:
+Bashrc function:
+```sh
+load_secrets() {
+    VAULT_FILE="$HOME/devops/github/homelab/IaC/ansible/vault/secrets.yaml"
+    VAULT_PASS_FILE="~/.ssh/id_rsa.pub"
+
+    # Decrypt vault, parse variables, and suppress output
+    while IFS=: read -r key value; do
+        export "$(echo "$key" | xargs)"="$(echo "$value" | xargs)"
+    done < <(ansible-vault view --vault-password-file "$VAULT_PASS_FILE" "$VAULT_FILE" | grep ': ')
+
+    echo "Secrets loaded into env."
+}
+```
+
+As you can see in the above snippit, I use my ssh public key as the password file. Feel free to use something more secure as this is only for development of this code and not for any kind of production environment.
+
+Create the ansible vault:
+
+```sh
+ansible-vault create secrets.yaml
+```
+
+Expand the variables below and save them into the vault. Be sure to change values of the capitalized as these are placer values:
 
 <details>
 <summary>Environment variables.</summary>
 
-## Env
-export domain="DOMAIN"
+## Local Env
+DOWNLOADS_DIRECTORY: "PATH/TO/YOUR/DOWNLOADS ie /home/USER/downloads"
+DOMAIN: "DOMAIN ie mydomain (not mydomain.com)"
+NETWORK: "NETWORK/MASK ie. 192.168.1.0/24"
 
 ## Admin
-export admin_fname='ADMIN_FNAME'
-export admin_lname='ADMIN_LNAME'
-export admin_email='ADMIN_EMAIL'
-export admin_username='ASMIN_USERNAME'
-export admin_password='ADMIN_PASSWORD'
-export admin_ssh_key="$HOME/.ssh/id_rsa"
+ADMIN_EMAIL: 'ADMIN EMAIL'
+ADMIN_USERNAME: 'ADMIN USERNAME'
+ADMIN_PASSWORD: 'ADMIN PASSWORD'
+ADMIN_SSH_KEY: "/PATH/TO/HOME/.ssh/id_rsa"
 
 ## Root
-export root_password='ROOT_PASSWORD'
-
-## User
-export user_fname="USER_FNAME"
-export user_lname="USER_LNAME"
-export user_email="USER_EMAIL"
-export user_username="USER_USERNAME"
-export user_password="USER_PASSWORD"
+ROOT_PASSWORD: 'ROOT PASSWORD'
 
 ## Proxmox
-export pm_user='root'
-export pm_password="$root_password"
-export pm_address="PROXMOX_IP"
-export pm_netmask="PROXMOX_NETMASK"
-export pm_gateway="PROXMOX_GATEWAY"
-export pm_dns="PROXMOX_DNS"
+PM_USER: "PROXMOX USER ie. root"
+PM_PASSWORD: "PROXMOX USER PASSWORD"
+PM_ADDRESS: "PROXMOX IP ADDRESS":
 
 ## Ansible
-export ansible_inv="$HOME/devops/github/homelab/IaC/ansible/inventory/hosts.ini"
-export ansible_pbs="$HOME/devops/github/homelab/IaC/ansible/playbooks"
-export ansible_ssh_key="$HOME/.ssh/ansible_key"
-alias ansiblepb='ansible-playbook'
-export ansible_username="ansible"
-export ansible_password='ANSIBLE_PASSWORD'
-
-## Terraform
-export TF_VAR_pm_user="$pm_user@pam"
-export TF_VAR_pm_password=$pm_password
-export TF_VAR_terraform_ssh_key="$HOME/.ssh/terraform_key"
-export TF_VAR_terraform_password='TERRAFORM_PASSWORD'
-export TF_VAR_terraform_username="terraform"
+ANSIBLE_SSH_KEY: "/PATH/TO/HOME/.ssh/ansible_key"
 
 </details>
-
-Be sure to change values to fit your needs, especially the capitalized as these are placer values. Also, it's not recommended to store secrets in bashrc. In a future update, i'll be storing these in ansible vault and retrieving from there instead.
 
 ### Initialization
 
 I use Windows Subsystem Linux. You'll need `yq` for processing some data in the following script:
 
 ``` sh
+sudo apt install -y yq
 chmod +x scripts/copy_keys.sh
 ./copy_keys.sh
 ```
 
-This script will create ssh keys for the admin, ansible, and terraform users and copy them to the proxmox host.
+This script will create ssh keys for the admin and ansible users if they don't already exist and copy them to the proxmox host.
 
 ### Ansible playbooks
 
 Install Ansible
 
 ``` sh
-sudo apt update && sudo apt install -y ansible
+sudo apt install -y ansible
 ```
 
-I have a series of playbooks that can be used to lay down the groundwork. 
-
-With your variables declared and loaded into the environment, you can just execute these playbooks and have proxmox configured and running with a pfSense router and an Ubuntu server ready for setting up your Kubernetes environments.
+I have a series of playbooks that can be used to lay down the groundwork. With your variables declared and loaded into the environment, you can just execute these playbooks and have proxmox configured and running with a pfSense router and an Ubuntu server with k8s ready for your deployments.
 
 Execute the playbooks in the following order:
 
 1. update_host.yaml - Updates and cleans up packages.
 2. create_storage.yaml - Creates storage on the Proxmox host.
-3. dl_isos.yaml - Downloads a few isos used for the infrastructure deployment.
+3. download_media.yaml - Downloads a few isos used for the infrastructure deployment.
 4. disable_firewall.yaml - Disables the firewall on the Proxmox host (we'll be using pfSense for hat)
 5. create_network.yaml - Creates the bridges needed for networking across infrastructure deployed to proxmox.
 6. create_confs.yaml - Loads the configuration files in the IaC/ansible/files/configs folder to an iso to be mounted on the VMs configured for it (pfSense)
-7. create_vms.yaml - Deploys the VMs with an unattended install of pfSense.
+7. create_cloudinit.yaml - Creates the cloud init configuration files for each k8s env
+8. create_vms.yaml - Deploys the pfSense and k8s VMs with an unattended install of pfSense.
 
-That's it! You should have a pfSense router accessible through https via the WAN address and an ubuntu server behind the firewall. The Ubuntu server should be waiting to be installed. In the future, I'll use a cloud-init installation of Ubuntu with Kubernetes set up.
+After a few minutes (about 15 minutes total) You should have a pfSense router accessible through https via the WAN address and three k8s nodes for a DEV, UAT, and PROD environment ready for deployments. For non-development use, you'll want to increase the resources allocated for the UAT and PROD VMs.
 
-# TO DO
+### Using the VMs
 
-1. Create cloud_init for Ubuntu server with Kubernetes set up
+The pfSense router has 4 networks it services:
+
+*LAN*: 192.168.1.0/24 - Used if you want pfSense to act as your router. Attach your home access point to the NIC being used so that pfSense handles DHCP/DNS. Devices on this network don't require routing to be specified.
+*DEV*: 192.168.10.0/24
+*UAT*: 192.168.20.0/24
+*PROD*: 192.168.30.0/24
+
+The WAN is configurd for DHCP, so you have to access the console to see what IP was assigned to it. With it, you can access the web configurator vie https.
+
+Each of the k8s nodes should have an nginx deployment ready for connections via a random port between 30000-32767. If you access the console for each of them, you'll see the port you can access from the messages returned from the cloud-init configuration:
+
+```
+[  313.921776] cloud-init[1022]: nginx        NodePort    10.152.183.150   <none>        80:32334/TCP   3s
+```
+
+This specifies 32334 as the port to access. It won't be ready for connections for a few minutes. You can check if it is ready via the console:
+
+```
+devadmin@k8sdev:~$ sudo k8s kubectl get pods -o wide
+NAME                     READY   STATUS    RESTARTS   AGE     IP           NODE     NOMINATED NODE   READINESS GATES
+nginx-5869d7778c-7g62p   1/1     Running   0          3m57s   10.1.0.251   k8sdev   <none>           <none>
+```
+
+### Setting a route to the networks
+
+You'll need to set a route to these networks if you're not using the pfsense as your home router. In Windows 11, here's what you can do:
+
+```sh
+route -p add 192.168.10.0 MASK 255.255.255.0 x.x.x.x
+```
+
+Replace "x.x.x.x" with the WAN ip address of the pfsense router. Do the same for the other networks as well.
+
+### Aftermath
+
+That's it! This whole process should take around 25 minutes or so from when Proxmox is installed to being able to access the nginx server on the k8s node. Time to build some pipelines with ArgoCD and deploy away!

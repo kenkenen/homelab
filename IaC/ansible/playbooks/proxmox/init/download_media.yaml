@@ -1,0 +1,39 @@
+---
+- name: Download Media Files
+  hosts: proxmox
+  gather_facts: false
+  vars_files:
+    - "{{ lookup('env', 'HOME') }}/devops/github/homelab/IaC/ansible/inventory/group_vars/proxmox_media.yaml"
+  tasks:
+    - name: Check if Media file exists locally
+      ansible.builtin.stat:
+        path: "{{ lookup('env', 'DOWNLOADS_DIRECTORY') }}/{{ item.filename }}"
+      with_items: "{{ media_files }}"
+      register: local_media_stats
+      delegate_to: localhost
+
+    - name: Check if Media file exists on target host
+      ansible.builtin.stat:
+        path: "{{ item.dest }}/{{ item.filename }}"
+      with_items: "{{ media_files }}"
+      register: media_stats
+
+    - name: Copy media files from local machine if they exist and not on target host
+      ansible.builtin.copy:
+        src: "{{ lookup('env', 'DOWNLOADS_DIRECTORY') }}/{{ item.item.filename }}"
+        dest: "{{ item.item.dest }}/{{ item.item.filename }}"
+      when: item.stat.exists and not (media_stats.results | selectattr('item.filename', 'equalto', item.item.filename) | map(attribute='stat.exists') | first)
+      with_items: "{{ local_media_stats.results }}"
+      become: yes
+
+    - name: Ensure the media files exist on target host
+      ansible.builtin.stat:
+        path: "{{ item.dest }}/{{ item.filename }}"
+      with_items: "{{ media_files }}"
+      register: media_stats_final
+
+    - name: Fail if any media file is missing
+      ansible.builtin.fail:
+        msg: "Media copy or download failed for {{ item.item.dest }}/{{ item.item.filename }}"
+      when: not item.stat.exists
+      with_items: "{{ media_stats_final.results }}"

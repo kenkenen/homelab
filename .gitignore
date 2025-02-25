@@ -3,8 +3,5 @@
 *.pub
 *.bak
 *.swp
-
-.terraform*
-IaC/ansible/files/configs/pfsenseconfigs.xml
 todo*
-IaC/terraform/
+secrets.yaml

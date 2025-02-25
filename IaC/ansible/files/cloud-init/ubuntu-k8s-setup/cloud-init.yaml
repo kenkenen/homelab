@@ -1,0 +1,75 @@
+#cloud-config
+hostname: {{ hostname }}
+manage_etc_hosts: true
+
+users:
+  - name: {{ adminuser }}
+    groups: sudo
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - {{ sshkey }}
+
+chpasswd:
+  list: |
+    {{ adminuser }}:{{ adminpassword }}
+  expire: false
+
+write_files:
+  - path: /etc/netplan/00-installer-config.yaml
+    content: |
+      network:
+        version: 2
+        renderer: networkd
+        ethernets:
+          ens18:
+            addresses:
+              - 192.168.{{ subnet }}.1/24   # Set static IP (Replace with your desired IP)
+            gateway4: 192.168.{{ subnet }}.254   # Set default gateway
+            nameservers:
+              addresses:
+                - 192.168.{{ subnet }}.254 
+                - 8.8.8.8           # Google DNS (Replace with your DNS server if needed)
+                - 8.8.4.4
+            critical: true
+    owner: root:root
+    permissions: '0600'
+
+network:
+  version: 2
+  ethernets:
+    ens18:
+      addresses:
+        - 192.168.{{ subnet }}.100/24
+      gateway4: 192.168.{{ subnet }}.254
+      nameservers:
+        addresses:
+          - 192.168.{{ subnet }}.254
+          - 8.8.8.8
+          - 8.8.4.4
+      critical: true
+
+runcmd:
+  # Ensure networking is up before proceeding
+  - netplan generate
+  - netplan apply
+  - systemctl restart systemd-networkd
+  - sleep 10  # Allow network to stabilize
+  - while ! ping -c 1 -W 1 8.8.8.8; do sleep 2; done  # Wait for internet connectivity
+
+  # Now, update and upgrade packages
+  - apt-get update
+  - apt-get upgrade -y
+
+  # Disable swap (required for Kubernetes)
+  - swapoff -a
+  - sed -i '/ swap / s/^/#/' /etc/fstab
+
+  # Install k8s snao
+  - snap install k8s --classic
+  - k8s bootstrap
+
+  # Deploy nginx to verify k8s install
+  - k8s kubectl create deployment nginx --image=nginx
+  - k8s kubectl expose deployment nginx --port=80 --type=NodePort
+  - k8s kubectl get services
