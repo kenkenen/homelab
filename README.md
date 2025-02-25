@@ -128,7 +128,7 @@ The pfSense router has 4 networks it services:
 
 **PROD**: 192.168.30.0/24
 
-The WAN is configurd for DHCP, so you have to access the console to see what IP was assigned to it. With it, you can access the web configurator vie https.
+The WAN is configurd for DHCP, so you have to access the console to see what IP was assigned to it. With it, you can access the web configurator vie https if you've placed the pfSense router within your home network. If you're using the pfSense router as the home router then you'll access the webconfigurator via https://192.168.1.254. You'll want to disable external access to the webconfigurator via WAN if you're using the pfSense router in this way.
 
 Each of the k8s nodes should have an nginx deployment ready for connections via a random port between 30000-32767. If you access the console for each of them, you'll see the port you can access from the messages returned from the cloud-init configuration:
 
