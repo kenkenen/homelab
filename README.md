@@ -121,8 +121,11 @@ After a few minutes (about 25 minutes total) You should have a pfSense router ac
 The pfSense router has 4 networks it services:
 
 **LAN**: 192.168.1.0/24 - Used if you want pfSense to act as your router. Attach your home access point to the NIC being used so that pfSense handles DHCP/DNS. Devices on this network don't require routing to be specified.
+
 **DEV**: 192.168.10.0/24
+
 **UAT**: 192.168.20.0/24
+
 **PROD**: 192.168.30.0/24
 
 The WAN is configurd for DHCP, so you have to access the console to see what IP was assigned to it. With it, you can access the web configurator vie https.
