@@ -1,15 +1,15 @@
 # homelab
 
-This repository contains the configuration for a homelab setup using Proxmox as a VM host. The goal is to create structured infrastructure for deploying containerized applications into a DEV, UAT, and PROD environment. The structured infrastructure is perfect for the implementation of pipelines to deploy developed containers to a DEV environment and progressively promote the deployments to the upper level environments using typical SDLC methodologies.
+This repository contains the configuration for a homelab setup using Proxmox as a VM host. The goal is to create structured infrastructure for deploying containerized applications into a DEV, UAT, and PROD environment. The infrastructure can be used for the implementation of pipelines to deploy developed containers to a DEV environment and progressively promote the deployments to the upper level environments using typical SDLC methodologies.
 
 ## Getting Started
 
-If you're trying to set up an identical set up as mine and have a laptop that can handle it, expand the Setting up Yyper-V section and follow it for a quick set up.
+If you're trying an identical set up as mine and have a laptop that can handle it, expand the Setting up Hyper-V section and follow it.
 
 <details>
 <summary>Setting up Hyper-V</summary>
 
-If you have a laptop that can handle it, you can run the whole thing on Hyper-V on it. My 7th gen X1 carbon is dated and not a whole lot to rave about, but it handled the job well.
+My 7th gen X1 carbon is dated and not a whole lot to rave about, but it handled the job well. If you have a laptop with similar or better specs, then this might work for you as a quick and dirty development environment for this:
 
 1. Enable Intel VT-x/VT-d in BIOS
 2. Install Hyper-V by opening `appwiz.cpl`, clicking `Turn Windows features on or off` -> Check `Hyper-V` -> Follow prompts and reboot to complete the install.
@@ -19,8 +19,6 @@ If you have a laptop that can handle it, you can run the whole thing on Hyper-V 
 
 ### Script Explanation:
 The script first defines the names for the external and internal switches, retrieves the network adapter connected to the internet, and creates an external switch using that adapter. It then creates an internal switch for private networking. The script proceeds to define the VM's name, ISO file path, memory size, and disk size, creating a new VM with these specifications. Secure boot is disabled for the VM, and a virtual hard disk is added. Three network adapters are attached to the VM: two to the external switch and one to the internal switch, with MAC address spoofing enabled for all three. Finally, the ISO file is set as the DVD drive for the VM.
-
-Follow through with the installation of Proxmox VE via the console and proceed with the next steps.
 
 </details>
 
@@ -115,7 +113,7 @@ Execute the playbooks in the following order:
 7. create_cloudinit.yaml - Creates the cloud init configuration files for each k8s env
 8. create_vms.yaml - Deploys the pfSense and k8s VMs with an unattended install of pfSense.
 
-After a few minutes (about 15 minutes total) You should have a pfSense router accessible through https via the WAN address and three k8s nodes for a DEV, UAT, and PROD environment ready for deployments. For non-development use, you'll want to increase the resources allocated for the UAT and PROD VMs.
+After a few minutes (about 25 minutes total) You should have a pfSense router accessible through https via the WAN address and three k8s nodes for a DEV, UAT, and PROD environment ready for deployments. For non-development use, you'll want to increase the resources allocated for the UAT and PROD VMs.
 
 ### Using the VMs
 
@@ -141,6 +139,8 @@ devadmin@k8sdev:~$ sudo k8s kubectl get pods -o wide
 NAME                     READY   STATUS    RESTARTS   AGE     IP           NODE     NOMINATED NODE   READINESS GATES
 nginx-5869d7778c-7g62p   1/1     Running   0          3m57s   10.1.0.251   k8sdev   <none>           <none>
 ```
+
+Anything other than `Running` means it is not ready.
 
 ### Setting a route to the networks
 
