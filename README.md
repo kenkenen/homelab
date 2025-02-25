@@ -56,6 +56,7 @@ Expand the variables below and save them into the vault. Be sure to change value
 <details>
 <summary>Environment variables.</summary>
 
+```
 ## Local Env
 DOWNLOADS_DIRECTORY: "PATH/TO/YOUR/DOWNLOADS ie /home/USER/downloads"
 DOMAIN: "DOMAIN ie mydomain (not mydomain.com)"
@@ -77,7 +78,7 @@ PM_ADDRESS: "PROXMOX IP ADDRESS":
 
 ## Ansible
 ANSIBLE_SSH_KEY: "/PATH/TO/HOME/.ssh/ansible_key"
-
+```
 </details>
 
 ### Initialization
