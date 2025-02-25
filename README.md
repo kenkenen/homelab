@@ -69,7 +69,7 @@ ADMIN_PASSWORD: 'ADMIN PASSWORD'
 ADMIN_SSH_KEY: "/PATH/TO/HOME/.ssh/id_rsa"
 BCRYPT_HASH: 'BCRYPT HASH ie $2y$10$VNjnPaCTPzs242eQ8rYl8OmGB9iqCzZHAZmCbvH2RK5FN27snyFJ.'
 
-# The above bcrypt hash was generated using "htpasswd -bnBC 10 "" pfsense | tr -d ':\n'"
+# The above bcrypt hash was generated using "htpasswd -bnBC 10 "" pfsense | tr -d ':\n'" You'll want to use the same thing you are using for ADMIN PASSWORD as opposed to "pfsense"
 
 ## Root
 ROOT_PASSWORD: 'ROOT PASSWORD'
